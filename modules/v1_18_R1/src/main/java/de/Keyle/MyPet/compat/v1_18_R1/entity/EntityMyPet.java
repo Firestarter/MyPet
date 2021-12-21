@@ -502,21 +502,13 @@ public abstract class EntityMyPet extends Mob implements MyPetMinecraftEntity {
 		Player owner = this.getOwner().getPlayer();
 
 		if (isMyPet() && myPet.getOwner().equals(entityhuman)) {
-			if (Configuration.Skilltree.Skill.Ride.RIDE_ITEM == null || Configuration.Skilltree.Skill.Ride.RIDE_ITEM.compare(itemStack)) {
-				if (myPet.getSkills().isActive(RideImpl.class) && canMove()) {
-					if (Permissions.hasExtended(owner, "MyPet.extended.ride")) {
-						((CraftPlayer) owner).getHandle().startRiding(this);
-						return InteractionResult.CONSUME;
-					} else {
-						getOwner().sendMessage(Translation.getString("Message.No.CanUse", myPet.getOwner()), 2000);
-					}
-				}
-			}
+			/*
 			if (Configuration.Skilltree.Skill.CONTROL_ITEM.compare(itemStack)) {
 				if (myPet.getSkills().isActive(ControlImpl.class)) {
 					return InteractionResult.CONSUME;
 				}
 			}
+			 */
 			if (itemStack != null) {
 				if (itemStack.getItem() == Items.NAME_TAG && itemStack.hasCustomHoverName()) {
 					if (Permissions.has(getOwner(), "MyPet.command.name") && Permissions.hasExtended(getOwner(), "MyPet.extended.nametag")) {
@@ -589,6 +581,10 @@ public abstract class EntityMyPet extends Mob implements MyPetMinecraftEntity {
 						return InteractionResult.CONSUME;
 					}
 				}
+
+				/* Start riding */
+				entityhuman.startRiding(this);
+				return InteractionResult.CONSUME;
 			}
 			if (!owner.isSneaking() && !Configuration.Misc.RIGHT_CLICK_COMMAND.isEmpty()) {
 				String command = Configuration.Misc.RIGHT_CLICK_COMMAND;
