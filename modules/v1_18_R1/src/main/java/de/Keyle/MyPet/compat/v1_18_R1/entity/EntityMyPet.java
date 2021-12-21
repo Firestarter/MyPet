@@ -499,23 +499,6 @@ public abstract class EntityMyPet extends Mob implements MyPetMinecraftEntity {
 	 * false: no reaction on rightclick
 	 */
 	public InteractionResult handlePlayerInteraction(final net.minecraft.world.entity.player.Player entityhuman, InteractionHand enumhand, final ItemStack itemStack) {
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				ServerPlayer player = ((ServerPlayer) entityhuman);
-				if (player.getBukkitEntity().isOnline()) {
-					player.initMenu(entityhuman.containerMenu);
-				}
-			}
-		}.runTaskLater(MyPetApi.getPlugin(), 5);
-		if (itemStack != null && itemStack.getItem() == Items.LEAD) {
-			((ServerPlayer) entityhuman).connection.send(new ClientboundSetEntityLinkPacket(this, null));
-		}
-
-		if (enumhand == InteractionHand.OFF_HAND) {
-			return InteractionResult.SUCCESS;
-		}
-
 		Player owner = this.getOwner().getPlayer();
 
 		if (isMyPet() && myPet.getOwner().equals(entityhuman)) {
@@ -938,13 +921,16 @@ public abstract class EntityMyPet extends Mob implements MyPetMinecraftEntity {
 		return super.getDimensions(entitypose);
 	}
 
-	/**
-	 * Allows handlePlayerInteraction() to
-	 * be fired when a lead is used
-	 */
+    /*
+     * The client thinks the lead has been consumed, but it has not been. To synchronize,
+     * we send an inventory update and leash packet.
+     */
 	@Override
-	public boolean canBeLeashed(net.minecraft.world.entity.player.Player entityhuman) {
-		return false;
+	public boolean canBeLeashed(net.minecraft.world.entity.player.Player player) {
+        var serverPlayer = (ServerPlayer) player;
+        serverPlayer.containerMenu.sendAllDataToRemote();
+        serverPlayer.connection.send(new ClientboundSetEntityLinkPacket(this, null));
+        return false;
 	}
 
 	/**
@@ -959,7 +945,7 @@ public abstract class EntityMyPet extends Mob implements MyPetMinecraftEntity {
 		try {
 			ItemStack itemstack = entityhuman.getItemInHand(enumhand);
 			InteractionResult result = handlePlayerInteraction(entityhuman, enumhand, itemstack);
-			if (!result.consumesAction() && getMyPet().getOwner().equals(entityhuman) && entityhuman.isShiftKeyDown()) {
+			if (enumhand != InteractionHand.OFF_HAND && !result.consumesAction() && getMyPet().getOwner().equals(entityhuman) && entityhuman.isShiftKeyDown()) {
 				result = InteractionResult.sidedSuccess(toggleSitting());
 			}
 			return result;
